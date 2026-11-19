@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facebook Post Helper</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f7f8fa;
+    color: #1c1e21;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 60px; }
+  header { margin-bottom: 28px; }
+  header h1 { font-size: 24px; font-weight: 700; }
+  header p { color: #65676b; font-size: 14px; margin-top: 4px; }
+
+  section {
+    background: #ffffff;
+    border: 1px solid #e4e6eb;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  section h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  section .purpose { color: #65676b; font-size: 13px; margin-bottom: 14px; }
+
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    padding: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    border: 1px solid #ccd0d5;
+    border-radius: 8px;
+    resize: vertical;
+    background: #fafbfc;
+  }
+  textarea:focus { outline: none; border-color: #1877f2; background: #fff; }
+
+  .preview-card {
+    margin-top: 14px;
+    border: 1px solid #e4e6eb;
+    border-radius: 8px;
+    padding: 14px;
+    background: #fff;
+  }
+  .preview-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8a8d91;
+    margin-bottom: 8px;
+  }
+  .preview-text {
+    font-size: 15px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .thumbs { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .thumb {
+    width: 110px;
+    height: 80px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 0;
+    cursor: pointer;
+    overflow: hidden;
+    background: none;
+  }
+  .thumb.selected { border-color: #1877f2; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .main-preview {
+    width: 100%;
+    max-height: 380px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e4e6eb;
+    display: block;
+  }
+  .preview-caption {
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1c1e21;
+    text-align: center;
+  }
+
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e4e6eb;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .checklist li:hover { background: #f0f2f5; }
+  .checklist li.done { background: #e7f3ec; border-color: #31a24c; }
+  .box {
+    width: 22px; height: 22px;
+    flex-shrink: 0;
+    border: 2px solid #bcc0c4;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #fff; font-weight: 700;
+  }
+  li.done .box { background: #31a24c; border-color: #31a24c; }
+  .item-text { font-size: 15px; }
+  li.done .item-text { color: #1e7e3c; text-decoration: line-through; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Facebook Post Helper</h1>
+    <p>Review your caption, preview your image, and run through the checklist before you post.</p>
+  </header>
+
+  <section>
+    <h2>Ready-to-Post Copy</h2>
+    <p class="purpose">Edit your caption below — the preview updates instantly.</p>
+    <textarea id="caption" aria-label="Caption editor">Satay set promotion this weekend at our stall in Seksyen 7, Shah Alam! 20 sticks per set, freshly grilled. Open Saturday &amp; Sunday, 4pm onwards. Come early! 🍢</textarea>
+    <div class="preview-card">
+      <div class="preview-label">Live Preview</div>
+      <div class="preview-text" id="previewText"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Image Preview</h2>
+    <p class="purpose">Tap a sample image to switch the main preview.</p>
+    <div class="thumbs" id="thumbs"></div>
+    <img id="mainPreview" class="main-preview" src="" alt="Main post image preview">
+    <div class="preview-caption" id="imageCaption"></div>
+  </section>
+
+  <section>
+    <h2>Posting Checklist</h2>
+    <p class="purpose">Tap each step to mark it done.</p>
+    <ul class="checklist" id="checklist"></ul>
+  </section>
+</div>
+
+<script>
+// ---- Feature 1: live caption preview ----
+var captionEl = document.getElementById('caption');
+var previewTextEl = document.getElementById('previewText');
+
+function updatePreview() {
+  previewTextEl.textContent = captionEl.value || '(Your caption will appear here)';
+}
+captionEl.addEventListener('input', updatePreview);
+updatePreview();
+
+// ---- Feature 2: swap image preview ----
+var images = [
+  {
+    caption: 'Malaysian food stall promotion — satay set at a Shah Alam night market',
+    src: svgImage('#f5a623', '#8b4513', '🍢', 'Satay Set Promo')
+  },
+  {
+    caption: 'Raya open house decoration theme — cozy kampung style setup in Klang',
+    src: svgImage('#2e8b57', '#14532d', '🏡', 'Raya Open House')
+  },
+  {
+    caption: 'Handmade batik tote bags — new designs from a Penang workshop',
+    src: svgImage('#4169aa', '#1e3a6e', '👜', 'Batik Tote Bags')
+  }
+];
+
+function svgImage(bg, dark, emoji, label) {
+  var svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560">' +
+    '<rect width="900" height="560" fill="' + bg + '"/>' +
+    '<circle cx="450" cy="230" r="150" fill="' + dark + '" opacity="0.25"/>' +
+    '<text x="450" y="290" font-size="140" text-anchor="middle">' + emoji + '</text>' +
+    '<text x="450" y="440" font-size="52" font-family="Arial, sans-serif" font-weight="bold" fill="#ffffff" text-anchor="middle">' + label + '</text>' +
+    '<text x="450" y="500" font-size="30" font-family="Arial, sans-serif" fill="#ffffff" opacity="0.85" text-anchor="middle">Sample image</text>' +
+    '</svg>';
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+var thumbsEl = document.getElementById('thumbs');
+var mainPreviewEl = document.getElementById('mainPreview');
+var imageCaptionEl = document.getElementById('imageCaption');
+
+function selectImage(index) {
+  mainPreviewEl.src = images[index].src;
+  mainPreviewEl.alt = images[index].caption;
+  imageCaptionEl.textContent = images[index].caption;
+  var buttons = thumbsEl.querySelectorAll('.thumb');
+  buttons.forEach(function (b, i) {
+    b.classList.toggle('selected', i === index);
+  });
+}
+
+images.forEach(function (img, i) {
+  var btn = document.createElement('button');
+  btn.className = 'thumb';
+  btn.setAttribute('aria-label', 'Choose image ' + (i + 1) + ': ' + img.caption);
+  var thumbImg = document.createElement('img');
+  thumbImg.src = img.src;
+  thumbImg.alt = '';
+  btn.appendChild(thumbImg);
+  btn.addEventListener('click', function () { selectImage(i); });
+  thumbsEl.appendChild(btn);
+});
+selectImage(0);
+
+// ---- Feature 3: checklist tick-off ----
+var steps = [
+  'Caption is edited and ready to copy',
+  'Post image looks correct in the preview',
+  'I am logged in to the right Facebook Page'
+];
+var checklistEl = document.getElementById('checklist');
+
+steps.forEach(function (step) {
+  var li = document.createElement('li');
+  var box = document.createElement('span');
+  box.className = 'box';
+  box.textContent = '✓';
+  var text = document.createElement('span');
+  text.className = 'item-text';
+  text.textContent = step;
+
+  li.appendChild(box);
+  li.appendChild(text);
+  li.addEventListener('click', function () {
+    li.classList.toggle('done');
+    box.style.visibility = li.classList.contains('done') ? 'visible' : 'hidden';
+  });
+  box.style.visibility = 'hidden';
+  checklistEl.appendChild(li);
+});
+</script>
+</body>
+</html>
